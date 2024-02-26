@@ -1,4 +1,4 @@
-package com.lmar.todoapp
+package com.lmar.todoapp.feature_todo.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
