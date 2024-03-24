@@ -4,19 +4,41 @@ import android.content.Context
 import androidx.room.Room
 import com.lmar.todoapp.feature_todo.data.local.TodoDao
 import com.lmar.todoapp.feature_todo.data.local.TodoDatabase
+import com.lmar.todoapp.feature_todo.data.remote.TodoApi
+import com.lmar.todoapp.feature_todo.data.repo.TodoListRepoImpl
+import com.lmar.todoapp.feature_todo.domain.repo.TodoListRepo
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object TodoModule {
     @Provides
+    fun providesRetrofitApi(retrofit: Retrofit): TodoApi {
+        return retrofit.create(TodoApi::class.java)
+    }
+
+    @Provides
     fun providesRoomDao(database: TodoDatabase): TodoDao {
         return database.dao
+    }
+
+    @Singleton
+    @Provides
+    fun providesRetrofit(): Retrofit {
+        return Retrofit.Builder()
+            .addConverterFactory(
+                GsonConverterFactory.create()
+            )
+            .baseUrl("https://todoapp-7a9dd-default-rtdb.firebaseio.com/")
+            .build()
     }
 
     @Singleton
@@ -29,5 +51,11 @@ object TodoModule {
             TodoDatabase::class.java,
             "todo_database"
         ).fallbackToDestructiveMigration().build()
+    }
+
+    @Provides
+    @Singleton
+    fun providesTodoRepo(db: TodoDatabase, api: TodoApi, @IoDispatcher dispatcher: CoroutineDispatcher): TodoListRepo {
+        return TodoListRepoImpl(db.dao, api, dispatcher)
     }
 }
